@@ -8,7 +8,9 @@ use App\Http\Controllers\RetroController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 
 // Redirect the root path to /dashboard
@@ -44,11 +46,10 @@ Route::middleware('auth')->group(function () {
         route::get('retros', [RetroController::class, 'index'])->name('retro.index');
 
         // Common life
-        Route::get('common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
-
-        // admin common life
         Route::middleware(['auth', 'is_admin'])->group(function () {
-            Route::resource('tasks', TaskController::class);
+            Route::get('/common-life', [CommonLifeController::class, 'index'])->name('common-life.index'); // Liste des tâches
+            Route::get('/common-life/create', [CommonLifeController::class, 'create'])->name('common-life.create'); // Formulaire de création
+            Route::post('/common-life', [CommonLifeController::class, 'store'])->name('common-life.store'); // Sauvegarder la tâche
         });
     });
 

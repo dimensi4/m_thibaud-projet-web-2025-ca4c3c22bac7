@@ -14,7 +14,7 @@ class IsAdmin
             return $next($request);
         }
 
-        abort(403, 'Accès refusé – réservée aux administrateurs.');
+        return redirect()->route('login')->with('error', 'You must be an admin to access this page.');
     }
 }
 

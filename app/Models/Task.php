@@ -9,7 +9,6 @@ class Task extends Model
 {
     use HasFactory;
 
-    // Champs qu'on peut remplir automatiquement
     protected $fillable = [
         'title',
         'description',

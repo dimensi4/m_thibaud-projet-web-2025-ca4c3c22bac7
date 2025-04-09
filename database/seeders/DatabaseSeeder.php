@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             'first_name'    => 'Admin',
             'email'         => 'admin@codingfactory.com',
             'password'      => Hash::make('123456'),
+            'is_admin'      => 1,
         ]);
 
         $teacher = User::create([
