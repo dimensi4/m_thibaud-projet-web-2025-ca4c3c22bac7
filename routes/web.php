@@ -45,6 +45,11 @@ Route::middleware('auth')->group(function () {
 
         // Common life
         Route::get('common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
+
+        // admin common life
+        Route::middleware(['auth', 'is_admin'])->group(function () {
+            Route::resource('tasks', TaskController::class);
+        });
     });
 
 });
