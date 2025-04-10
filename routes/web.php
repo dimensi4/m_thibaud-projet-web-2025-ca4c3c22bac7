@@ -8,7 +8,6 @@ use App\Http\Controllers\RetroController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\GroupController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
@@ -47,9 +46,19 @@ Route::middleware('auth')->group(function () {
 
         // Common life
         Route::middleware(['auth', 'is_admin'])->group(function () {
-            Route::get('/common-life', [CommonLifeController::class, 'index'])->name('common-life.index'); // Liste des tâches
-            Route::get('/common-life/create', [CommonLifeController::class, 'create'])->name('common-life.create'); // Formulaire de création
-            Route::post('/common-life', [CommonLifeController::class, 'store'])->name('common-life.store'); // Sauvegarder la tâche
+            // View all tasks
+            Route::get('/common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
+
+            // Create a new task
+            Route::get('/common-life/create', [CommonLifeController::class, 'create'])->name('common-life.create');
+            Route::post('/common-life', [CommonLifeController::class, 'store'])->name('common-life.store');
+
+            // Edit an existing task
+            Route::get('/common-life/{task}/edit', [CommonLifeController::class, 'edit'])->name('common-life.edit');
+            Route::put('/common-life/{task}', [CommonLifeController::class, 'update'])->name('common-life.update');
+
+            // Optionally: Delete a task
+            Route::delete('/common-life/{task}', [CommonLifeController::class, 'destroy'])->name('common-life.destroy');
         });
     });
 
