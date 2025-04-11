@@ -13,12 +13,16 @@
             </div>
         @endif
 
-        <!-- Create New Task Button -->
-        <div class="mb-6">
-            <a href="{{ route('common-life.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                {{ __('Create a New Task') }}
-            </a>
-        </div>
+        <!-- Create New Task Button (admin only) -->
+        @auth
+            @if(Auth::user()->is_admin)
+                <div class="mb-6">
+                    <a href="{{ route('common-life.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        {{ __('Create a New Task') }}
+                    </a>
+                </div>
+            @endif
+        @endauth
 
         <!-- Task Table -->
         <div class="overflow-hidden bg-white shadow sm:rounded-lg">
@@ -31,9 +35,13 @@
                     <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         {{ __('Description') }}
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        {{ __('Actions') }}
-                    </th>
+                    @auth
+                        @if(Auth::user()->is_admin)
+                            <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                {{ __('Actions') }}
+                            </th>
+                        @endif
+                    @endauth
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -45,21 +53,25 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $task->description }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <!-- Edit Button -->
-                            <a href="{{ route('common-life.edit', $task->id) }}" class="text-blue-600 hover:text-blue-900">
-                                {{ __('Edit') }}
-                            </a>
+                        @auth
+                            @if(Auth::user()->is_admin)
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Edit Button -->
+                                    <a href="{{ route('common-life.edit', $task->id) }}" class="text-blue-600 hover:text-blue-900">
+                                        {{ __('Edit') }}
+                                    </a>
 
-                            <!-- Delete Button -->
-                            <form action="{{ route('common-life.destroy', $task->id) }}" method="POST" class="inline-block ml-4">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900">
-                                    {{ __('Delete') }}
-                                </button>
-                            </form>
-                        </td>
+                                    <!-- Delete Button -->
+                                    <form action="{{ route('common-life.destroy', $task->id) }}" method="POST" class="inline-block ml-4">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-900">
+                                            {{ __('Delete') }}
+                                        </button>
+                                    </form>
+                                </td>
+                            @endif
+                        @endauth
                     </tr>
                 @endforeach
                 </tbody>

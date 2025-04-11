@@ -45,21 +45,22 @@ Route::middleware('auth')->group(function () {
         route::get('retros', [RetroController::class, 'index'])->name('retro.index');
 
         // Common life
-        Route::middleware(['auth', 'is_admin'])->group(function () {
-            // View all tasks
+        // Route accessible to any authenticated user
+        Route::middleware(['auth'])->group(function () {
             Route::get('/common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
+        });
 
-            // Create a new task
+        // Routes restricted to admin users
+        Route::middleware(['auth', 'is_admin'])->group(function () {
             Route::get('/common-life/create', [CommonLifeController::class, 'create'])->name('common-life.create');
             Route::post('/common-life', [CommonLifeController::class, 'store'])->name('common-life.store');
 
-            // Edit an existing task
             Route::get('/common-life/{task}/edit', [CommonLifeController::class, 'edit'])->name('common-life.edit');
             Route::put('/common-life/{task}', [CommonLifeController::class, 'update'])->name('common-life.update');
 
-            // Optionally: Delete a task
             Route::delete('/common-life/{task}', [CommonLifeController::class, 'destroy'])->name('common-life.destroy');
         });
+
     });
 
 });
