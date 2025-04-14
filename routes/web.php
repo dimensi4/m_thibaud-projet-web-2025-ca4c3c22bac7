@@ -45,9 +45,14 @@ Route::middleware('auth')->group(function () {
         route::get('retros', [RetroController::class, 'index'])->name('retro.index');
 
         // Common life
-        // Route accessible to any authenticated user
+
+        // Routes accessible to any authenticated user
         Route::middleware(['auth'])->group(function () {
+            // View tasks (to-do and completed)
             Route::get('/common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
+
+            // Mark a task as completed with an optional comment
+            Route::post('/common-life/{task}/complete', [CommonLifeController::class, 'markAsCompleted'])->name('common-life.complete');
         });
 
         // Routes restricted to admin users
@@ -60,6 +65,7 @@ Route::middleware('auth')->group(function () {
 
             Route::delete('/common-life/{task}', [CommonLifeController::class, 'destroy'])->name('common-life.destroy');
         });
+
 
     });
 

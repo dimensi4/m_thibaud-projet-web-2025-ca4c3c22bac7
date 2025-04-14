@@ -24,58 +24,88 @@
             @endif
         @endauth
 
-        <!-- Task Table -->
-        <div class="overflow-hidden bg-white shadow sm:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        {{ __('Title') }}
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        {{ __('Description') }}
-                    </th>
-                    @auth
-                        @if(Auth::user()->is_admin)
-                            <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                {{ __('Actions') }}
-                            </th>
-                        @endif
-                    @endauth
-                </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                @foreach($tasks as $task)
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ $task->title }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $task->description }}
-                        </td>
-                        @auth
-                            @if(Auth::user()->is_admin)
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <!-- Edit Button -->
-                                    <a href="{{ route('common-life.edit', $task->id) }}" class="text-blue-600 hover:text-blue-900">
-                                        {{ __('Edit') }}
-                                    </a>
+        <!-- Tasks To Do -->
+        <div class="mb-10">
+            <h2 class="text-lg font-semibold mb-4">Tasks To Do</h2>
 
-                                    <!-- Delete Button -->
-                                    <form action="{{ route('common-life.destroy', $task->id) }}" method="POST" class="inline-block ml-4">
+            @if($tasks->isEmpty())
+                <p class="text-sm text-gray-500">You have no pending tasks 🎉</p>
+            @else
+                <div class="overflow-hidden bg-white shadow sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Title</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                        @foreach($tasks as $task)
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $task->title }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">{{ $task->description }}</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <!-- Complete Task Form -->
+                                    <form action="{{ route('common-life.complete', $task->id) }}" method="POST">
                                         @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">
-                                            {{ __('Delete') }}
+                                        <textarea name="comment" rows="2" class="w-full border rounded px-2 py-1 text-sm mb-2" placeholder="Add a comment (optional)"></textarea>
+                                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                                            Mark as Completed
                                         </button>
                                     </form>
+
+                                    <!-- Admin actions -->
+                                    @auth
+                                        @if(Auth::user()->is_admin)
+                                            <div class="mt-4 flex gap-4">
+                                                <!-- Edit Button -->
+                                                <a href="{{ route('common-life.edit', $task->id) }}" class="text-blue-600 hover:underline text-sm">
+                                                    {{ __('Edit') }}
+                                                </a>
+
+                                                <!-- Delete Button -->
+                                                <form action="{{ route('common-life.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:underline text-sm">
+                                                        {{ __('Delete') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
+                                    @endauth
                                 </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
+        <!-- Completed Tasks History -->
+        <div>
+            <h2 class="text-lg font-semibold mb-4">Your Completed Tasks</h2>
+
+            @if($completedTasks->isEmpty())
+                <p class="text-sm text-gray-500">You haven't completed any tasks yet.</p>
+            @else
+                <ul class="space-y-4">
+                    @foreach($completedTasks as $task)
+                        <li class="border p-4 rounded shadow-sm bg-gray-50">
+                            <div class="font-bold">{{ $task->title }}</div>
+                            <div class="text-sm text-gray-700">{{ $task->description }}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Completed on {{ \Carbon\Carbon::parse($task->pivot->completed_at)->format('d/m/Y \a\t H:i') }}
+                            </div>
+                            @if($task->pivot->comment)
+                                <div class="mt-2 italic text-sm text-gray-600">"{{ $task->pivot->comment }}"</div>
                             @endif
-                        @endauth
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         </div>
     </div>
 </x-app-layout>

@@ -13,4 +13,10 @@ class Task extends Model
         'title',
         'description',
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class)->withPivot('completed_at', 'comment')->withTimestamps();
+    }
+
 }

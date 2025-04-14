@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -70,15 +68,36 @@ class User extends Authenticatable
 
     /**
      * Retrieve the school of the user
-     */
-
-    /**
+     *
      * @return (Model&object)|null
      */
-    public function school() {
+    public function school()
+    {
         // With this, the user can only have 1 school
         return $this->belongsToMany(School::class, 'users_schools')
             ->withPivot('role')
             ->first();
+    }
+
+    /**
+     * Retrieve all tasks assigned to this user with pivot info
+     *
+     * @return BelongsToMany
+     */
+    public function tasks(): BelongsToMany
+    {
+        return $this->belongsToMany(Task::class)
+            ->withPivot('completed_at', 'comment')
+            ->withTimestamps();
+    }
+
+    /**
+     * Retrieve only the tasks that the user has marked as completed
+     *
+     * @return BelongsToMany
+     */
+    public function completedTasks(): BelongsToMany
+    {
+        return $this->tasks()->wherePivotNotNull('completed_at');
     }
 }
