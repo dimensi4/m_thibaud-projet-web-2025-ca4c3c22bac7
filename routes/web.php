@@ -41,11 +41,11 @@ Route::middleware('auth')->group(function () {
         // Groups
         Route::get('groups', [GroupController::class, 'index'])->name('group.index');
 
+
         // Retro
         route::get('retros', [RetroController::class, 'index'])->name('retro.index');
 
         // Common life
-
         // Routes accessible to any authenticated user
         Route::middleware(['auth'])->group(function () {
             // View tasks (to-do and completed)
