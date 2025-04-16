@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('theme');
-            $table->json('questions'); // Pour stocker les questions et réponses au format JSON
+            $table->json('questions');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

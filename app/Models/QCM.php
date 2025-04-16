@@ -9,6 +9,9 @@ class QCM extends Model
 {
     use HasFactory;
 
+    // Explicitly define the table name
+    protected $table = 'qcms';
+
     protected $fillable = [
         'title',
         'theme',

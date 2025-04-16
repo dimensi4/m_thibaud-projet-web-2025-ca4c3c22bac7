@@ -41,7 +41,6 @@ Route::middleware('auth')->group(function () {
         // Groups
         Route::get('groups', [GroupController::class, 'index'])->name('group.index');
 
-
         // Retro
         route::get('retros', [RetroController::class, 'index'])->name('retro.index');
 
@@ -57,18 +56,21 @@ Route::middleware('auth')->group(function () {
 
         // Routes restricted to admin users
         Route::middleware(['auth', 'is_admin'])->group(function () {
+            // Common Life Admin Routes
             Route::get('/common-life/create', [CommonLifeController::class, 'create'])->name('common-life.create');
             Route::post('/common-life', [CommonLifeController::class, 'store'])->name('common-life.store');
-
             Route::get('/common-life/{task}/edit', [CommonLifeController::class, 'edit'])->name('common-life.edit');
             Route::put('/common-life/{task}', [CommonLifeController::class, 'update'])->name('common-life.update');
-
             Route::delete('/common-life/{task}', [CommonLifeController::class, 'destroy'])->name('common-life.destroy');
+
+            // QCM Routes
+            Route::prefix('groups')->group(function () {
+                Route::get('/qcm/create', [GroupController::class, 'createQCM'])->name('groups.qcm.create');
+                Route::post('/qcm/generate', [GroupController::class, 'generateQCM'])->name('groups.qcm.generate');
+                Route::get('/qcm/{qcm}', [GroupController::class, 'showQCM'])->name('groups.qcm.show');
+            });
         });
-
-
     });
-
 });
 
 require __DIR__.'/auth.php';
