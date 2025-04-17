@@ -3,13 +3,12 @@
 use App\Http\Controllers\CohortController;
 use App\Http\Controllers\CommonLifeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RetroController;
 use App\Http\Controllers\StudentController;
-use App\Http\Controllers\KnowledgeController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TeacherController;
-use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 
 // Redirect the root path to /dashboard
@@ -58,6 +57,13 @@ Route::middleware('auth')->group(function () {
                 Route::get('/{task}/edit', [CommonLifeController::class, 'edit'])->name('common-life.edit');
                 Route::put('/{task}', [CommonLifeController::class, 'update'])->name('common-life.update');
                 Route::delete('/{task}', [CommonLifeController::class, 'destroy'])->name('common-life.destroy');
+            });
+
+            // QCM Routes (Knowledge)
+            Route::prefix('knowledge')->group(function () {
+                Route::get('/create', [KnowledgeController::class, 'create'])->name('knowledge.create');
+                Route::post('/generate', [KnowledgeController::class, 'generate'])->name('knowledge.generate');
+                Route::get('/{qcm}', [KnowledgeController::class, 'show'])->name('knowledge.show'); // Pour afficher un bilan spécifique
             });
         });
     });

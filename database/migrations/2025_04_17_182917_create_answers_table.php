@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('qcms', function (Blueprint $table) {
+        Schema::create('answers', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->integer('number_of_questions');
-            $table->integer('answers_per_question');
+            $table->foreignId('question_id')->constrained()->onDelete('cascade');
+            $table->string('answer_text');
+            $table->boolean('is_correct')->default(false);
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('qcms');
+        Schema::dropIfExists('answers');
     }
 };
