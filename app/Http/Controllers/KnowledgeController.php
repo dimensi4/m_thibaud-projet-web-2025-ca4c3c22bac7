@@ -10,39 +10,25 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class KnowledgeController extends Controller
 {
-    /**
-     * Display the main knowledge page.
-     *
-     * @return Factory|View|Application|object
-     */
     public function index()
     {
         return view('pages.knowledge.index');
     }
 
-    /**
-     * Display the form to create a new QCM.
-     *
-     * @return Factory|View|Application|object
-     */
     public function create()
     {
         return view('pages.knowledge.create');
     }
 
-    /**
-     * Generate and store the QCM questions using the DeepSeek API.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function generate(Request $request)
     {
+        Log::info('=== DÉBUT DE LA GÉNÉRATION ===');
+        Log::debug('Données reçues:', $request->all());
+
         $request->validate([
             'theme' => 'required|string',
             'number_of_questions' => 'required|integer|min:1',
@@ -60,6 +46,15 @@ class KnowledgeController extends Controller
         $deepSeekApiKey = env('DEEPSEEK_API_KEY');
         $deepSeekApiUrl = env('DEEPSEEK_API_URL');
 
+        Log::info('Configuration API', [
+            'theme' => $theme,
+            'questions_total' => $numberOfQuestions,
+            'questions_simple' => $simpleCount,
+            'questions_moyen' => $mediumCount,
+            'questions_difficile' => $difficultCount,
+            'answers_per_question' => $answersPerQuestion
+        ]);
+
         $generatedQuestionsData = [];
 
         $generateQuestions = function ($difficulty, $count) use ($theme, $answersPerQuestion, $deepSeekApiKey, $deepSeekApiUrl, &$generatedQuestionsData) {
@@ -69,6 +64,8 @@ class KnowledgeController extends Controller
 
             $prompt = "Générer $count questions de difficulté $difficulty sur le thème de '$theme' avec $answersPerQuestion options de réponse dont une correcte. Le format de chaque question doit être : 'Question: [la question]?\nRéponses: a) [réponse 1], b) [réponse 2], c) [réponse 3]...\nRéponse Correcte: [la lettre de la réponse correcte]'.";
 
+            Log::debug("Prompt envoyé ($difficulty):", ['prompt' => $prompt]);
+
             try {
                 $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
@@ -76,12 +73,19 @@ class KnowledgeController extends Controller
                 ])->post($deepSeekApiUrl, [
                     'prompt' => $prompt,
                     'n' => 1,
-                    'max_tokens' => 800, // Adjust as needed
+                    'max_tokens' => 800,
+                ]);
+
+                Log::info("Réponse API ($difficulty)", [
+                    'status' => $response->status(),
+                    'body' => $response->json()
                 ]);
 
                 if ($response->successful()) {
                     $results = $response->json()['choices'][0]['text'] ?? '';
                     $questions = explode("\n\n", trim($results));
+
+                    Log::debug("Questions brutes ($difficulty):", ['questions' => $questions]);
 
                     foreach ($questions as $questionText) {
                         if (preg_match('/^Question: (.+?)\nRéponses: (.+?)\nRéponse Correcte: ([a-z])\)?$/ms', $questionText, $matches)) {
@@ -105,11 +109,19 @@ class KnowledgeController extends Controller
                             }
                         }
                     }
+
+                    Log::info("Questions parsées ($difficulty):", $generatedQuestionsData);
                 } else {
-                    \Illuminate\Support\Facades\Log::error("Erreur API DeepSeek ($difficulty):", ['response' => $response->json()]);
+                    Log::error("Erreur API ($difficulty)", [
+                        'status' => $response->status(),
+                        'error' => $response->json()
+                    ]);
                 }
             } catch (\Exception $e) {
-                logger()->error("DeepSeek API Exception ($difficulty):", ['message' => $e->getMessage()]);
+                Log::error("Exception API ($difficulty)", [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         };
 
@@ -119,54 +131,68 @@ class KnowledgeController extends Controller
 
         $allGeneratedQuestions = collect($generatedQuestionsData)->shuffle()->take($numberOfQuestions);
 
+        Log::info('Questions finales sélectionnées:', $allGeneratedQuestions->toArray());
+
         if ($allGeneratedQuestions->isEmpty()) {
-            return back()->with('error', 'Erreur lors de la génération des questions par l\'IA.');
+            Log::error('Aucune question générée');
+            return back()->with('error', 'Échec de la génération des questions');
         }
 
-        // Create the QCM record
-        $qcm = Qcm::create([
-            'title' => $theme,
-            'number_of_questions' => $numberOfQuestions,
-            'answers_per_question' => $answersPerQuestion,
-        ]);
-
-        // Store the generated questions and answers in the database
-        foreach ($allGeneratedQuestions as $generatedQuestion) {
-            $question = Question::create([
-                'qcm_id' => $qcm->id,
-                'question_text' => $generatedQuestion['question'],
-                'difficulty' => $generatedQuestion['difficulty'],
+        try {
+            Log::info('Création du QCM...');
+            $qcm = Qcm::create([
+                'title' => $theme,
+                'number_of_questions' => $numberOfQuestions,
+                'answers_per_question' => $answersPerQuestion,
             ]);
 
-            $correctAnswerId = null;
-            $answerKeys = array_keys($generatedQuestion['answers']);
+            Log::info('QCM créé', ['id' => $qcm->id]);
 
-            foreach ($generatedQuestion['answers'] as $key => $answerText) {
-                $isCorrect = (strtolower($key) === $generatedQuestion['correct_answer']);
-                $answer = Answer::create([
-                    'question_id' => $question->id,
-                    'answer_text' => $answerText,
-                    'is_correct' => $isCorrect,
+            foreach ($allGeneratedQuestions as $generatedQuestion) {
+                $question = Question::create([
+                    'qcm_id' => $qcm->id,
+                    'question_text' => $generatedQuestion['question'],
+                    'difficulty' => $generatedQuestion['difficulty'],
                 ]);
-                if ($isCorrect) {
-                    $correctAnswerId = $answer->id;
-                }
-            }
-            $question->update(['correct_answer_id' => $correctAnswerId]);
-        }
 
-        return redirect()->route('knowledge.index')->with('success', 'Bilan de compétences créé avec succès !');
+                $correctAnswerId = null;
+                $answerKeys = array_keys($generatedQuestion['answers']);
+
+                foreach ($generatedQuestion['answers'] as $key => $answerText) {
+                    $isCorrect = (strtolower($key) === $generatedQuestion['correct_answer']);
+                    $answer = Answer::create([
+                        'question_id' => $question->id,
+                        'answer_text' => $answerText,
+                        'is_correct' => $isCorrect,
+                    ]);
+
+                    if ($isCorrect) {
+                        $correctAnswerId = $answer->id;
+                        $question->update(['correct_answer_id' => $correctAnswerId]);
+                    }
+                }
+
+                Log::debug('Question créée', [
+                    'question_id' => $question->id,
+                    'correct_answer_id' => $correctAnswerId
+                ]);
+            }
+
+            Log::info('=== GÉNÉRATION TERMINÉE AVEC SUCCÈS ===');
+            return redirect()->route('knowledge.index')->with('success', 'QCM créé avec succès!');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Erreur lors de la sauvegarde: ' . $e->getMessage());
+        }
     }
 
-    /**
-     * Display a specific QCM.
-     *
-     * @param Qcm $qcm
-     * @return Factory|View|Application|object
-     */
     public function show(Qcm $qcm)
     {
-        $qcm->load('questions.answers'); // Eager load relations
+        $qcm->load('questions.answers');
         return view('pages.knowledge.show', compact('qcm'));
     }
 }
