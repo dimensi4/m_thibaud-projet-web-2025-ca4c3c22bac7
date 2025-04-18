@@ -34,7 +34,14 @@ Route::middleware('auth')->group(function () {
         Route::get('students', [StudentController::class, 'index'])->name('student.index');
 
         // Knowledge
-        Route::get('knowledge', [KnowledgeController::class, 'index'])->name('knowledge.index');
+        Route::prefix('knowledge')->group(function () {
+            Route::get('/', [KnowledgeController::class, 'index'])->name('knowledge.index');
+            Route::get('/create', [KnowledgeController::class, 'create'])->name('knowledge.create');
+            Route::post('/generate', [KnowledgeController::class, 'generate'])->name('knowledge.generate');
+            Route::get('/{qcm}', [KnowledgeController::class, 'show'])->name('knowledge.show'); // Pour afficher un bilan spécifique
+            Route::get('/attempt/{qcm}', [KnowledgeController::class, 'attempt'])->name('knowledge.attempt'); // Afficher le QCM pour répondre
+            Route::post('/submit/{qcm}', [KnowledgeController::class, 'submit'])->name('knowledge.submit'); // Soumettre les réponses
+        });
 
         // Retro
         Route::get('retros', [RetroController::class, 'index'])->name('retro.index');

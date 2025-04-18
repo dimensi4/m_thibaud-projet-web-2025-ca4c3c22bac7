@@ -11,10 +11,13 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <p>{{ __('Bienvenue dans la section de gestion des bilans de connaissances.') }}</p>
-                    <a href="{{ route('knowledge.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 mt-4">
-                        {{ __('Créer un nouveau bilan de compétences') }}
-                    </a>
+                    <p class="mb-4">{{ __('Bienvenue dans la section des bilans de connaissances.') }}</p>
+
+                    @if (auth()->check() && auth()->user()->is_admin)
+                        <a href="{{ route('knowledge.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 mt-4">
+                            {{ __('Créer un nouveau bilan de compétences') }}
+                        </a>
+                    @endif
 
                     @if (session('success'))
                         <div class="mt-4 text-green-500">
@@ -28,7 +31,21 @@
                         </div>
                     @endif
 
-                    {{-- Vous pouvez ajouter ici une liste des bilans de compétences existants --}}
+                    <h2 class="text-lg font-semibold mt-6 mb-2">{{ __('Liste des Bilans de Compétences Disponibles') }}</h2>
+
+                    @if ($qcms->isNotEmpty())
+                        <ul class="space-y-2">
+                            @foreach ($qcms as $qcm)
+                                <li>
+                                    <a href="{{ route('knowledge.attempt', $qcm->id) }}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out">
+                                        {{ $qcm->title }} ({{ $qcm->number_of_questions }} questions)
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p>{{ __('Aucun bilan de compétences n\'est disponible pour le moment.') }}</p>
+                    @endif
                 </div>
             </div>
         </div>

@@ -19,8 +19,20 @@
                         @csrf
 
                         <div>
-                            <label for="theme" class="block font-medium text-sm text-gray-700">{{ __('Thème à évaluer') }}</label>
-                            <input id="theme" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" type="text" name="theme" value="{{ old('theme') }}" required autofocus>
+                            <label for="theme" class="block font-medium text-sm text-gray-700">{{ __('Langage de programmation à évaluer') }}</label>
+                            <select id="theme" name="theme" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                <option value="" disabled selected>{{ __('Sélectionner un langage') }}</option>
+                                <option value="PHP">PHP</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="Python">Python</option>
+                                <option value="Java">Java</option>
+                                <option value="C#">C#</option>
+                                <option value="C++">C++</option>
+                                <option value="Ruby">Ruby</option>
+                                <option value="Swift">Swift</option>
+                                <option value="Kotlin">Kotlin</option>
+                                <option value="Go">Go</option>
+                            </select>
                             @error('theme')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
