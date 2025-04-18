@@ -26,7 +26,7 @@ class KnowledgeController extends Controller
 
     public function generate(Request $request)
     {
-        Log::info('=== DÉBUT DE LA GÉNÉRATION ===');
+        Log::info('=== DÉBUT DE LA GÉNÉRATION (Gemini) ===');
         Log::debug('Données reçues:', $request->all());
 
         $request->validate([
@@ -43,49 +43,54 @@ class KnowledgeController extends Controller
         $mediumCount = round($numberOfQuestions * 0.4);
         $difficultCount = $numberOfQuestions - $simpleCount - $mediumCount;
 
-        $deepSeekApiKey = env('DEEPSEEK_API_KEY');
-        $deepSeekApiUrl = env('DEEPSEEK_API_URL');
+        $googleApiKey = config('services.gemini.api_key');
+        $geminiApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-        Log::info('Configuration API', [
+        Log::info('Configuration API (Gemini)', [
             'theme' => $theme,
             'questions_total' => $numberOfQuestions,
             'questions_simple' => $simpleCount,
             'questions_moyen' => $mediumCount,
             'questions_difficile' => $difficultCount,
-            'answers_per_question' => $answersPerQuestion
+            'answers_per_question' => $answersPerQuestion,
+            'api_key_configured' => !empty($googleApiKey),
+            'api_url' => $geminiApiUrl,
         ]);
 
         $generatedQuestionsData = [];
 
-        $generateQuestions = function ($difficulty, $count) use ($theme, $answersPerQuestion, $deepSeekApiKey, $deepSeekApiUrl, &$generatedQuestionsData) {
+        $generateQuestions = function ($difficulty, $count) use ($theme, $answersPerQuestion, $googleApiKey, $geminiApiUrl, &$generatedQuestionsData) {
             if ($count <= 0) {
                 return;
             }
 
             $prompt = "Générer $count questions de difficulté $difficulty sur le thème de '$theme' avec $answersPerQuestion options de réponse dont une correcte. Le format de chaque question doit être : 'Question: [la question]?\nRéponses: a) [réponse 1], b) [réponse 2], c) [réponse 3]...\nRéponse Correcte: [la lettre de la réponse correcte]'.";
 
-            Log::debug("Prompt envoyé ($difficulty):", ['prompt' => $prompt]);
+            Log::debug("Prompt envoyé (Gemini - $difficulty):", ['prompt' => $prompt]);
 
             try {
                 $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer ' . $deepSeekApiKey,
-                ])->post($deepSeekApiUrl, [
-                    'prompt' => $prompt,
-                    'n' => 1,
-                    'max_tokens' => 800,
+                ])->post($geminiApiUrl . '?key=' . $googleApiKey, [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
+                    ]
                 ]);
 
-                Log::info("Réponse API ($difficulty)", [
+                Log::info("Réponse API (Gemini - $difficulty)", [
                     'status' => $response->status(),
                     'body' => $response->json()
                 ]);
 
                 if ($response->successful()) {
-                    $results = $response->json()['choices'][0]['text'] ?? '';
+                    $results = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '';
                     $questions = explode("\n\n", trim($results));
 
-                    Log::debug("Questions brutes ($difficulty):", ['questions' => $questions]);
+                    Log::debug("Questions brutes (Gemini - $difficulty):", ['questions' => $questions]);
 
                     foreach ($questions as $questionText) {
                         if (preg_match('/^Question: (.+?)\nRéponses: (.+?)\nRéponse Correcte: ([a-z])\)?$/ms', $questionText, $matches)) {
@@ -110,15 +115,15 @@ class KnowledgeController extends Controller
                         }
                     }
 
-                    Log::info("Questions parsées ($difficulty):", $generatedQuestionsData);
+                    Log::info("Questions parsées (Gemini - $difficulty):", $generatedQuestionsData);
                 } else {
-                    Log::error("Erreur API ($difficulty)", [
+                    Log::error("Erreur API (Gemini - $difficulty)", [
                         'status' => $response->status(),
                         'error' => $response->json()
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::error("Exception API ($difficulty)", [
+                Log::error("Exception API (Gemini - $difficulty)", [
                     'message' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
@@ -131,11 +136,11 @@ class KnowledgeController extends Controller
 
         $allGeneratedQuestions = collect($generatedQuestionsData)->shuffle()->take($numberOfQuestions);
 
-        Log::info('Questions finales sélectionnées:', $allGeneratedQuestions->toArray());
+        Log::info('Questions finales sélectionnées (Gemini):', $allGeneratedQuestions->toArray());
 
         if ($allGeneratedQuestions->isEmpty()) {
-            Log::error('Aucune question générée');
-            return back()->with('error', 'Échec de la génération des questions');
+            Log::error('Aucune question générée par Gemini');
+            return back()->with('error', 'Échec de la génération des questions par Gemini');
         }
 
         try {
@@ -178,15 +183,15 @@ class KnowledgeController extends Controller
                 ]);
             }
 
-            Log::info('=== GÉNÉRATION TERMINÉE AVEC SUCCÈS ===');
-            return redirect()->route('knowledge.index')->with('success', 'QCM créé avec succès!');
+            Log::info('=== GÉNÉRATION TERMINÉE AVEC SUCCÈS (Gemini) ===');
+            return redirect()->route('knowledge.index')->with('success', 'QCM créé avec succès avec Gemini!');
 
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création', [
+            Log::error('Erreur lors de la création (Gemini)', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return back()->with('error', 'Erreur lors de la sauvegarde: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la sauvegarde (Gemini): ' . $e->getMessage());
         }
     }
 
