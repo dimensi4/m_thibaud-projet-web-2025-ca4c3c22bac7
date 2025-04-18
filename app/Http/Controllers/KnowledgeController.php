@@ -3,26 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
-use App\Models\Qcm; 
+use App\Models\Qcm;
 use App\Models\Question;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class KnowledgeController extends Controller
 {
     /**
-     * Display the main knowledge index page, showing a list of available quizzes.
+     * Display the main knowledge index page, showing a list of available quizzes and indicating which ones the user has completed.
      *
      * @return Factory|View|Application|object
      */
     public function index()
     {
         $qcms = Qcm::all(); // Retrieve all available quizzes from the database
-        return view('pages.knowledge.index', compact('qcms'));
+        $completedQcms = Auth::check() ? Auth::user()->qcms()->pluck('qcms.id')->toArray() : [];
+        return view('pages.knowledge.index', compact('qcms', 'completedQcms'));
     }
 
     /**
@@ -36,8 +38,7 @@ class KnowledgeController extends Controller
     }
 
     /**
-     * Generate new quiz questions using the Gemini API and store the quiz in the database,
-     * providing more time for the API to respond.
+     * Generate new quiz questions using the Gemini API and store the quiz in the database.
      *
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
@@ -247,19 +248,24 @@ class KnowledgeController extends Controller
     }
 
     /**
-     * Display the quiz for the user to attempt.
+     * Display the quiz for the authenticated user to attempt.
+     * If the user has already completed the quiz, redirect them with a warning.
      *
      * @param Qcm $qcm
-     * @return Factory|View|Application|object
+     * @return Factory|View|Application|object|\Illuminate\Http\RedirectResponse
      */
     public function attempt(Qcm $qcm)
     {
+        if (Auth::check() && $qcm->completedByUsers()->where('user_id', Auth::id())->exists()) {
+            return redirect()->route('knowledge.index')->with('warning', 'You have already completed this knowledge assessment.');
+        }
         $qcm->load('questions.answers'); // Eager load questions and answers
         return view('pages.knowledge.attempt', compact('qcm'));
     }
 
     /**
-     * Process the user's submitted answers for a quiz and calculate the score.
+     * Process the user's submitted answers for a quiz, calculate the score,
+     * save the result, and display the result to the user.
      *
      * @param Request $request
      * @param Qcm $qcm
@@ -288,6 +294,11 @@ class KnowledgeController extends Controller
 
         // Calculate the final grade (out of 20)
         $note = ($score / $totalQuestions) * 20;
+
+        // If the user is authenticated, save their result
+        if (Auth::check()) {
+            Auth::user()->qcms()->attach($qcm->id, ['score' => $score, 'total_questions' => $totalQuestions, 'note' => $note]);
+        }
 
         // Display the result to the user
         return view('pages.knowledge.result', compact('qcm', 'score', 'totalQuestions', 'note'));

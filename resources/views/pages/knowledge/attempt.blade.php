@@ -11,22 +11,22 @@
         </h1>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-8">
+        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <h2 class="text-lg font-semibold mb-4">{{ __('Répondre au bilan :') }} {{ $qcm->title }}</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ __('Répondre au bilan :') }} {{ $qcm->title }}</h2>
                     <form method="POST" action="{{ route('knowledge.submit', $qcm->id) }}">
                         @csrf
                         @foreach ($qcm->questions as $question)
-                            <div class="mb-6">
-                                <p class="font-semibold">{{ $loop->iteration }}. {{ $question->question_text }} ({{ ucfirst($question->difficulty) }})</p>
+                            <div class="mb-6 border-b border-gray-200 pb-4">
+                                <p class="font-semibold text-gray-700 mb-2">{{ $loop->iteration }}. {{ $question->question_text }} <span class="text-sm text-gray-500">({{ ucfirst($question->difficulty) }})</span></p>
                                 <ul class="list-none ml-4">
                                     @foreach ($question->answers as $answer)
-                                        <li>
-                                            <label>
-                                                <input type="radio" name="question_{{ $question->id }}" value="{{ $answer->id }}" class="mr-2">
-                                                {{ $answer->answer_text }}
+                                        <li class="py-1">
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="question_{{ $question->id }}" value="{{ $answer->id }}" class="form-radio h-5 w-5 text-indigo-600 transition duration-150 ease-in-out">
+                                                <span class="ml-2 text-gray-700">{{ $answer->answer_text }}</span>
                                             </label>
                                         </li>
                                     @endforeach

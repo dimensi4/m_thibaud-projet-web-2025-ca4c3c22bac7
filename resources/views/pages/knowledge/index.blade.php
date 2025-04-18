@@ -7,15 +7,15 @@
         </h1>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <p class="mb-4">{{ __('Bienvenue dans la section des bilans de connaissances.') }}</p>
+                    <p class="mb-4 text-gray-600">{{ __('Bienvenue dans la section des bilans de connaissances. Choisissez un bilan pour commencer.') }}</p>
 
                     @if (auth()->check() && auth()->user()->is_admin)
                         <a href="{{ route('knowledge.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 mt-4">
-                            {{ __('Créer un nouveau bilan de compétences') }}
+                            {{ __('Créer un nouveau bilan') }}
                         </a>
                     @endif
 
@@ -25,26 +25,40 @@
                         </div>
                     @endif
 
+                    @if (session('warning'))
+                        <div class="mt-4 text-yellow-500">
+                            {{ session('warning') }}
+                        </div>
+                    @endif
+
                     @if (session('error'))
                         <div class="mt-4 text-red-500">
                             {{ session('error') }}
                         </div>
                     @endif
 
-                    <h2 class="text-lg font-semibold mt-6 mb-2">{{ __('Liste des Bilans de Compétences Disponibles') }}</h2>
+                    <h2 class="text-xl font-semibold mt-6 mb-3 text-gray-800">{{ __('Bilans de Compétences Disponibles') }}</h2>
 
                     @if ($qcms->isNotEmpty())
-                        <ul class="space-y-2">
+                        <ul class="space-y-3">
                             @foreach ($qcms as $qcm)
-                                <li>
-                                    <a href="{{ route('knowledge.attempt', $qcm->id) }}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out">
-                                        {{ $qcm->title }} ({{ $qcm->number_of_questions }} questions)
-                                    </a>
+                                <li class="bg-gray-100 rounded-md shadow-sm">
+                                    @if (in_array($qcm->id, $completedQcms))
+                                        <div class="block px-4 py-3 text-gray-500 font-medium line-through cursor-not-allowed">
+                                            {{ $qcm->title }}
+                                            <span class="text-sm text-gray-400">({{ $qcm->number_of_questions }} questions) - {{ __('Déjà complété') }}</span>
+                                        </div>
+                                    @else
+                                        <a href="{{ route('knowledge.attempt', $qcm->id) }}" class="block px-4 py-3 text-indigo-600 font-medium hover:text-indigo-800 transition duration-200 ease-in-out">
+                                            {{ $qcm->title }}
+                                            <span class="text-sm text-gray-500">({{ $qcm->number_of_questions }} questions)</span>
+                                        </a>
+                                    @endif
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <p>{{ __('Aucun bilan de compétences n\'est disponible pour le moment.') }}</p>
+                        <p class="text-gray-500">{{ __('Aucun bilan de compétences n\'est disponible pour le moment.') }}</p>
                     @endif
                 </div>
             </div>

@@ -1,26 +1,26 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="flex items-center gap-1 text-sm font-normal">
-            <a href="{{ route('knowledge.index') }}" class="text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out">
-                {{ __('Bilans de connaissances') }}
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-gray-800">
+                {{ __('Créer un Bilan de Compétences') }}
+            </h1>
+            <a href="{{ route('knowledge.index') }}" class="inline-flex items-center px-3 py-2 bg-gray-200 border border-transparent rounded-md text-xs text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 ease-in-out">
+                {{ __('Retour aux Bilans') }}
             </a>
-            <svg class="flex-shrink-0 w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-            </svg>
-            <span class="text-gray-700">{{ __('Créer un bilan de compétences') }}</span>
-        </h1>
+        </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <form method="POST" action="{{ route('knowledge.generate') }}">
+        <div class="max-w-md mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="px-6 py-8">
+                    <h2 class="text-lg font-medium text-gray-900 mb-6">{{ __('Paramètres du Nouveau Bilan') }}</h2>
+                    <form method="POST" action="{{ route('knowledge.generate') }}" class="space-y-6">
                         @csrf
 
-                        <div>
-                            <label for="theme" class="block font-medium text-sm text-gray-700">{{ __('Langage de programmation à évaluer') }}</label>
-                            <select id="theme" name="theme" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                        <div class="space-y-1">
+                            <label for="theme" class="block text-sm font-semibold text-gray-700">{{ __('Langage de programmation à évaluer') }}</label>
+                            <select id="theme" name="theme" class="block w-full mt-1 rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
                                 <option value="" disabled selected>{{ __('Sélectionner un langage') }}</option>
                                 <option value="PHP">PHP</option>
                                 <option value="JavaScript">JavaScript</option>
@@ -34,29 +34,29 @@
                                 <option value="Go">Go</option>
                             </select>
                             @error('theme')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mt-4">
-                            <label for="number_of_questions" class="block font-medium text-sm text-gray-700">{{ __('Nombre de questions') }}</label>
-                            <input id="number_of_questions" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" type="number" name="number_of_questions" value="{{ old('number_of_questions') }}" required min="1">
+                        <div class="space-y-1">
+                            <label for="number_of_questions" class="block text-sm font-semibold text-gray-700">{{ __('Nombre de questions') }}</label>
+                            <input id="number_of_questions" class="block w-full mt-1 rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" type="number" name="number_of_questions" value="{{ old('number_of_questions') }}" required min="1">
                             @error('number_of_questions')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mt-4">
-                            <label for="answers_per_question" class="block font-medium text-sm text-gray-700">{{ __('Nombre de réponses possibles par question') }}</label>
-                            <input id="answers_per_question" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" type="number" name="answers_per_question" value="{{ old('answers_per_question') }}" required min="2" max="10">
+                        <div class="space-y-1">
+                            <label for="answers_per_question" class="block text-sm font-semibold text-gray-700">{{ __('Nombre de réponses par question') }}</label>
+                            <input id="answers_per_question" class="block w-full mt-1 rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" type="number" name="answers_per_question" value="{{ old('answers_per_question') }}" required min="2" max="10">
                             @error('answers_per_question')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="flex items-center justify-end mt-4">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 ml-4">
-                                {{ __('Générer le Bilan de Compétences') }}
+                        <div class="flex justify-end">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                {{ __('Générer le Bilan') }}
                             </button>
                         </div>
                     </form>

@@ -100,4 +100,14 @@ class User extends Authenticatable
     {
         return $this->tasks()->wherePivotNotNull('completed_at');
     }
+
+    /**
+     * The qcms that the user has completed.
+     */
+    public function qcms(): BelongsToMany
+    {
+        return $this->belongsToMany(Qcm::class, 'qcm_results')
+            ->withPivot('score', 'total_questions', 'note')
+            ->withTimestamps();
+    }
 }
